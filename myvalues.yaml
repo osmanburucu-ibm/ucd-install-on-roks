@@ -2,14 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# UCD Version
+version: "7.1.1.2"
+
 image:
-  repository: cp.icr.io/ibm-ucds
-  tag: "7.1.0.3.1069281"
   pullPolicy: Always
   secret: "entitledregistry-secret"
 
 service:
-  type: NodePort
+  type: ClusterIP
 
 database:
   type: "mysql"
@@ -25,6 +26,11 @@ secureConnections:
 secret:
   name: "ucd-secrets"
 
+license:
+# Change license.accept to true to indicate you have read and agree to license agreements : http://ibm.biz/ucd-license
+  accept: true
+  serverUrl: ""
+
 ucdLicense:
   serverUrl: ""
 # Change license to true to indicate have read and agree to license agreements : http://ibm.biz/ucd-license
@@ -33,22 +39,22 @@ ucdLicense:
 persistence:
   enabled: true
   useDynamicProvisioning: true
-  fsGroup: 1001
+  fsGroup: "1001"
 
 extLibVolume:
   name: "ext-lib"
-  existingClaimName: ""
+  existingClaimName: "ext-lib-pvc"
   configMapName: "user-script"
-  storageClassName: "ibmc-block-gold"
+  storageClassName: "ibmc-vpc-block-10iops-tier"
   size: "10Gi"
-  
+  accessMode: "ReadWriteOnce"
 
 appDataVolume:
   name: "appdata"
-  existingClaimName: ""
-  storageClassName: "ibmc-block-gold"
+  existingClaimName: "appdata-pvc"
+  storageClassName: "ibmc-vpc-block-10iops-tier"
   size: "20Gi"
-  
+  accessMode: "ReadWriteOnce"
 
 ingress:
   host: ""
