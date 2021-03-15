@@ -7,8 +7,10 @@ version: "7.1.1.2"
 
 image:
   pullPolicy: Always
-  secret: ""
-
+  secret: "entitledregistry-secret"
+ucdLicense:
+# Change license to true to indicate have read and agree to license agreements : http://ibm.biz/ucd-license
+  accept: true
 license:
 # Change license to true to indicate you have read and agree to license agreements : http://ibm.biz/ucd-license
   accept: true
@@ -22,9 +24,9 @@ persistence:
 confVolume:
   name: "conf"
   existingClaimName: ""
-  storageClassName: ""
-  size: ""
-  accessMode: "ReadWriteMany"
+  storageClassName: "ibmc-block-gold"
+  size: "20Gi"
+  accessMode: "ReadWriteOnce"
 
 # UCD Agent Relay URI 
 # random:(http://relay1:20080,http://relay2:20080)
@@ -36,7 +38,7 @@ codestationUrl: ""
 
 # UCD Server URI
 # random:(wss://ucd1.example.com:7919,wss://ucd2.example.com:7919)
-serverUri: ""
+serverUri: "wss://ucd710-ibm-ucd-prod:7919"
 
 # Secret holding keystore password
 secret:

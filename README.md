@@ -19,7 +19,7 @@ There are 6 environment variables that you can set to control the installation (
 Once you've set the environment variables you want to change, then you can just simply type
 
 ```
-./install.sh
+./install-vpc.sh
 ```
 
 It should take about 5 minutes to install, and you will get progress information as it proceeds.  At the end, the script will output the route and credentials for your ucd server.

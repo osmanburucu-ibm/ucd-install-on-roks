@@ -11,6 +11,11 @@ image:
 ucdLicense:
 # Change license to true to indicate have read and agree to license agreements : http://ibm.biz/ucd-license
   accept: true
+license:
+# Change license.accept to true to indicate you have read and agree to license agreements : http://ibm.biz/ucd-license
+  accept: true
+  serverUrl: ""
+  
 # Persistent storage for agent configuration files
 persistence:
   enabled: true
