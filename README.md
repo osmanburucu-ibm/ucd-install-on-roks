@@ -1,3 +1,8 @@
+# Installing UCD Server and Agent on ROKS
+
+* [Server Installation instructions from Knowledgecenter](https://www.ibm.com/support/knowledgecenter/SS4GSP_7.1.1/com.ibm.udeploy.install.doc/topics/docker_cloud_over.html)
+* [Agent installation instructions](https://www.ibm.com/support/knowledgecenter/SS4GSP_7.1.1/com.ibm.udeploy.install.doc/topics/agent_install_helm_chart.html)
+
 To get started you're going to need an openshift cluster running in the IBM cloud, and a client with oc installed.  Clone this repo as it has a number of yaml files that you can just run.  There are now two options to install UCD, one is to run the script, which is the quickest and easiest way.  The second way is a more step by step approach - which is useful if you need to understand how to do the install, or you need to make significant changes.
 
 
