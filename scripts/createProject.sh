@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# check if used variables are set
+if [ -z "${NAMESPACE}" ]; then 
+   echo "NAMESPACE not set"
+   exit 1
+fi 
+
 #
 # Create the project
 #
