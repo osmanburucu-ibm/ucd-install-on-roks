@@ -1,20 +1,27 @@
 #!/bin/bash
 
-source ./setenv-variables.sh $#
+if [ "$#" -gt  0 ]; then
+  scripts/showHelp.sh
+  exit 1
+fi
+
+source scripts/setenv-variables.sh
 
 #
 # Create the project
 #
-echo "INFO 1/7: creating the project"
-oc get project ${NAMESPACE}
-if [ $? -eq 1 ]; then
-  oc new-project ${NAMESPACE};
-  oc adm policy add-scc-to-group ibm-restricted-scc system:serviceaccounts:${NAMESPACE};
-else
-  echo "ERROR:  Namespace ${NAMESPACE} already exists.  Please delete the namespace or try a different name.";
-  exit 1
-fi
-echo "SUCCESS 1/7: creating the project"
+# echo "INFO 1/7: creating the project"
+# oc get project ${NAMESPACE}
+# if [ $? -eq 1 ]; then
+#   oc new-project ${NAMESPACE};
+#   oc adm policy add-scc-to-group ibm-restricted-scc system:serviceaccounts:${NAMESPACE};
+# else
+#   echo "ERROR:  Namespace ${NAMESPACE} already exists.  Please delete the namespace or try a different name.";
+#   exit 1
+# fi
+# echo "SUCCESS 1/7: creating the project"
+
+scripts/createProject.sh
 
 #
 # Create the my sql database
