@@ -30,7 +30,7 @@ MYSQL_PASSWORD=${MYSQL_PASSWORD:-pleasechangeme123}
 UCD_RELEASE_NAME=${UCD_RELEASE_NAME:-ucd710}
 UCDAGENT_RELEASE_NAME=${UCDAGENT_RELEASE_NAME:-ucdagent710}
 UCD_KEYSTORE_PASSWORD=${UCD_KEYSTORE_PASSWORD:-pleasechangeme123}
-STORAGE_CLASS=${STORAGE_CLASS:-ibmc-vpc-block-10iops-tierd}
+STORAGE_CLASS=${STORAGE_CLASS:-ibmc-block-gold}
 
 if [ -z "${ENTITLED_REGISTRY_KEY}" ]; then 
   echo "You must set the environment variable ENTITLED_REGISTRY_KEY to the key of your entitled registry";

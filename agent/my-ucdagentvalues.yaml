@@ -38,7 +38,7 @@ codestationUrl: ""
 
 # UCD Server URI
 # random:(wss://ucd1.example.com:7919,wss://ucd2.example.com:7919)
-serverUri: "wss://ucd710-ibm-ucd-prod:7919"
+serverUri: "wss://UCD-RELEASENAME-ibm-ucd-prod:7919"
 
 # Secret holding keystore password
 secret:

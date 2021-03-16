@@ -1,43 +1,6 @@
 #!/bin/bash
-# if [ $# -gt  0 ]; then
-# echo "There are 6 environment variables that you can set to control the installation (or you can just modify the install.sh to change the default values).  The only one that is mandatory is the ENTITLED_REGISTRY_KEY, the others are optional with sensible default values.  I would strongly recommend changing the two passwords.
 
-# ENTITLED_REGISTRY_KEY - the value of your entitled registry key, this is used to pull down the ucd docker images.
-# NAMESPACE - the namespace that ucd will be deployed to.  If it doesnt exist, it will get created.
-# MYSQL_PASSWORD - the password to the mysql database.  The mysql database is not exposed outside of the cluster.
-# UCD_ADMIN_PASSWORD - the password to ucd.  the UCD ui is on the public internet, so I woudl strongly recommend this is 32 characters plus.  The defaul value is admin !!!
-# UCD_RELEASE_NAME - this is the name of the helm release for ucd, and is also used as the basis of the route to the ucd server.
-# UCDAGENT_RELEASE_NAME - this is the name of the helm release for the ucd agents.
-
-# Once you've set the environment variables you want to change, then you can just simply type
-
-# ./install.sh
-
-# It should take about 5 minutes to install, and you will get progress information as it proceeds.";
-# exit 1;
-# fi
-
-# # if [ -z "${NAMESPACE}" ]; then NAMESPACE='ucd';  fi
-# # if [ -z "${MYSQL_PASSWORD}" ]; then MYSQL_PASSWORD='pleasechangeme123';  fi
-# # if [ -z "${UCD_ADMIN_PASSWORD}" ]; then UCD_ADMIN_PASSWORD='admin'; fi
-# # if [ -z "${UCD_RELEASE_NAME}" ]; then UCD_RELEASE_NAME='ucd710';  fi
-# # if [ -z "${UCDAGENT_RELEASE_NAME}" ]; then UCDAGENT_RELEASE_NAME='ucdagent710';  fi
-# # if [ -z "${UCD_KEYSTORE_PASSWORD}" ]; then UCD_KEYSTORE_PASSWORD='pleasechangeme123';  fi
-# # if [ -z "${STORAGE_CLASS}" ]; then STORAGE_CLASS='ibmc-vpc-block-10iops-tier';  fi
-
-# NAMESPACE=${NAMESPACE:-ucd} 
-# MYSQL_PASSWORD=${MYSQL_PASSWORD:-pleasechangeme123}
-# UCD_RELEASE_NAME=${UCD_RELEASE_NAME:-ucd710}
-# UCDAGENT_RELEASE_NAME=${UCDAGENT_RELEASE_NAME:-ucdagent710}
-# UCD_KEYSTORE_PASSWORD=${UCD_KEYSTORE_PASSWORD:-ucpleasechangeme123d710}
-# STORAGE_CLASS=${STORAGE_CLASS:-ucibmc-vpc-block-10iops-tierd710}
-
-# if [ -z "${ENTITLED_REGISTRY_KEY}" ]; then 
-#   echo "You must set the environment variable ENTITLED_REGISTRY_KEY to the key of your entitled registry";
-#   exit 1;
-# fi
-
-source ./setenv-variables.sh
+source ./setenv-variables.sh $#
 
 #
 # Create the project
@@ -52,11 +15,14 @@ else
   exit 1
 fi
 echo "SUCCESS 1/7: creating the project"
+
 #
 # Create the my sql database
+# use template version from db directory and replace storage class 
 #
 echo "INFO 2/7: creating the mysql database"
-#sed -i '' 's/storage-class: .*/storage_class: $STORAGE_CLASS/' mysql-pvc.yaml
+cp db/mysql-pvc.yaml mysql-pvc.yaml
+sed -i  "s/storage_class:.*/storage_class: ${STORAGE_CLASS}/" mysql-pvc.yaml
 oc apply -f ./mysql-pvc.yaml
 PVCStatus=`oc get pvc mysql-pvc -o=jsonpath="{@.status.phase}"`
 while [ $PVCStatus != "Bound" ]
@@ -78,25 +44,45 @@ do
 done
 sleep 20
 echo "SUCCESS 2/7: MYSQL is running"
+
+#
+# configure database. create table, user and add grant
+#
 echo "Info 3/7: Configuring mysql database"
 oc exec -it $MYSQL_POD_NAME -- mysql -u root -ppassword -e "CREATE USER 'ibm_ucd'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';"
 oc exec -it $MYSQL_POD_NAME -- mysql -u root -ppassword -e "CREATE DATABASE ibm_ucd character set utf8 collate utf8_bin;"
 oc exec -it $MYSQL_POD_NAME -- mysql -u root -ppassword -e "GRANT ALL ON ibm_ucd.* TO 'ibm_ucd'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}' WITH GRANT OPTION;"
 echo "SUCCESS 3/7: MYSQL is confogured with the ucd database"
+
+#
+# create secret for IBM Container Registry (cp.icr.io) entitlement and add new secret to serviceaccount
+#
 echo "INFO 4/7: Configuring secrets and config maps"
 oc create secret docker-registry entitledregistry-secret --docker-username=cp --docker-password=${ENTITLED_REGISTRY_KEY} --docker-server=cp.icr.io
 oc patch serviceaccount/default --type='json' -p='[{"op":"add","path":"/imagePullSecrets/-","value":{"name":"entitledregistry-secret"}}]'
-
+#
+# encode ucd admin and mysql db password and generate secrets out of them (ucDBSecret.yaml)
+#
 UCD_PWD_BASE64=`echo ${UCD_ADMIN_PASSWORD} | base64`
 MYSQL_PWD_BASE64=`echo password | base64`
 oc create secret generic ucd-secrets --from-literal=dbpassword=${MYSQL_PASSWORD} --from-literal=initpassword=${UCD_ADMIN_PASSWORD} --from-literal=keystorepassword=${UCD_KEYSTORE_PASSWORD}
+#
+# add script for automatic driver download for ucd server
+#
 oc create -f mysqldriverConfigMap.yaml
 echo "SUCCESS 4/7: Configured secrets and config maps"
 
+#
+# Installing UCD Server
+#
 echo "INFO 5/7: Installing UCD Server"
 helm repo add ibm-helm https://raw.githubusercontent.com/IBM/charts/master/repo/ibm-helm/
-#sed -i '' 's/ibmc-file-gold-gid/${STORAGE_CLASS}/' myvalues.yaml
-#helm install ${UCD_RELEASE_NAME} --values myvalues.yaml ibm-helm/ibm-ucd-prod
+#  if update of myvalues is needed generate a new one and edit the appropiate fields there.
+#  helm inspect values ibm-helm/ibm-ucd-prod > myvalues.yaml
+
+# prepare storage for application data and external library (f.e. mysql driver)
+cp server/ucd-pvc.yaml ucd-pvc.yaml
+sed -i  "s/storage_class:.*/storage_class: ${STORAGE_CLASS}/g" ucd-pvc.yaml
 oc apply -f ./ucd-pvc.yaml
 PVCStatus=`oc get pvc appdata-pvc -o=jsonpath="{@.status.phase}"`
 while [ $PVCStatus != "Bound" ]
@@ -106,7 +92,10 @@ do
   PVCStatus=`oc get pvc appdata-pvc -o=jsonpath="{@.status.phase}"`
 done
 echo "INFO: PVC is bound."
-# helm template ${UCD_RELEASE_NAME} ibm-helm/ibm-ucd-prod -a security.openshift.io/v0 --values myvalues-vpc.yaml --set license.accept=true > ucdk8s.yaml
+
+# the actual installation process
+cp server/myvalues.yaml myvalues.yaml
+# combine my settings from myvalues with openshift security settings and accept license
 helm template ${UCD_RELEASE_NAME} ibm-helm/ibm-ucd-prod -a security.openshift.io/v0 --values myvalues.yaml --set license.accept=true > ucdk8s.yaml
 oc apply -f ./ucdk8s.yaml
 UCD_POD_NAME=`oc get pods | grep ${UCD_RELEASE_NAME} | cut -d " " -f 1`
@@ -119,15 +108,18 @@ do
 done
 echo "SUCCESS 5/7: Installed UCD Server"
 
+#
+# TODO: need to create usefull ucdroute.yaml
+#
 echo "INFO 6/7: Installing Route"
 oc create route passthrough ucd --service=${UCD_RELEASE_NAME}-ibm-ucd-prod --port=https
 echo "SUCCESS 6/7: Installing Route"
 
 echo "INFO 7/7: Installing Agent"
 oc create secret generic ${UCDAGENT_RELEASE_NAME}-secrets --from-literal=keystorepassword=${UCD_KEYSTORE_PASSWORD}
-#sed -i '' 's/ucd705-ibm-ucd-prod/${UCD_RELEASE_NAME}-ibm-ucd-prod/' ucdagentvalues.yaml
+cp agent/my-ucdagentvalues.yaml my-ucdagentvalues.yaml
+sed -i  "s/UCD-RELEASENAME/${UCD_RELEASE_NAME}/g" my-ucdagentvalues.yaml
 #sed -i '' 's/ibmc-file-gold-gid/${STORAGE_CLASS}/' ucdagentvalues.yaml
-# helm template ${UCDAGENT_RELEASE_NAME} --values ucdagentvalues-vpc.yaml ibm-helm/ibm-ucda-prod -a security.openshift.io/v0 --set license.accept=true > ucdak8s.yaml
 helm template ${UCDAGENT_RELEASE_NAME} --values my-ucdagentvalues.yaml ibm-helm/ibm-ucda-prod -a security.openshift.io/v0 --set license.accept=true > ucdak8s.yaml
 oc apply -f ucdak8s.yaml
 #helm install ${UCDAGENT_RELEASE_NAME} --values ucdagentvalues-vpc.yaml ibm-helm/ibm-ucda-prod

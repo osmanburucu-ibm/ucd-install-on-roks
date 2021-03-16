@@ -26,7 +26,7 @@ It should take about 5 minutes to install, and you will get progress information
 
 # Manual instructions to install Urbancode Deploy(UCD) on IBM's Redhat Openshift Kubernetes Service (ROKS)
 
-The first step is to create a project, and set the service account up to be able to run UCD.
+The first step is to create a project, and set the service account up to be able to run UCD (info got from createSecurityNamespacePrereqs.sh).
 
 ```
 oc new-project ucd
