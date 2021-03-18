@@ -49,11 +49,14 @@ oc apply -f db/mysqlservice.yaml
 Now you need to create the database for ucd to use.  Once the pods are running, exec into the mysql pod and create the database with the following.
 
 ```
-oc exec -it <mysql pod name> /bin/bash
+MySQL_Pod_Name=`oc get pods | grep mysql | cut -d " " -f 1`
+
+oc exec -it $MySQL_Pod_Name /bin/bash
+
 mysql -u root -ppassword
-CREATE USER 'ibm_ucd'@'localhost' IDENTIFIED BY <your-mysql-password>;
+CREATE USER 'ibm_ucd'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';
 CREATE DATABASE ibm_ucd character set utf8 collate utf8_bin;
-GRANT ALL ON ibm_ucd.* TO 'ibm_ucd'@'%' IDENTIFIED BY <your-mysql-password> WITH GRANT OPTION;
+GRANT ALL ON ibm_ucd.* TO 'ibm_ucd'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}' WITH GRANT OPTION;
 ```
 
 Now we need to create some secrets and config maps.  There are two secrets - one to access the ucd docker images, and a second to provide the default ucd admin password and sql database passwords.  Finally there is a config map to pull down the mysql drivers.  You'll need your entitled registry key here.  I also strongly recommend you change the default passwords in the ucdDBSecret.yaml file.   You can do this by `echo -n 'your password' | base64` and putting the resulting text into the file.  As it stands this will setup a ucd server with username admin, password of admin.
