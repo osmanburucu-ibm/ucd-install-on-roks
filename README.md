@@ -97,3 +97,8 @@ And thats it all completed.
 
 
 
+## Changes
+
+### 2021.04.06 permission error for KUBECONFIG 
+* solution base: <https://access.redhat.com/solutions/2702421>
+* added configmap

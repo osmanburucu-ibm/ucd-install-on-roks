@@ -22,6 +22,7 @@ fi
 echo "INFO: Installing Agent"
 
 oc create secret generic ${UCDAGENT_RELEASE_NAME}-secrets --from-literal=keystorepassword=${UCD_KEYSTORE_PASSWORD}
+oc apply -f agent/agent-configmap-env.yaml
 
 # change the template to actual UCD server releasename 
 cp agent/my-ucdagentvalues.yaml my-ucdagentvalues.yaml
@@ -40,6 +41,7 @@ do
 done
 echo "SUCCESS: Installing Agent - UCD Install complete"
 
+#TODO: how to add agent-configmap-env.yaml to the stateful set so that the agent pod should use new HOME settings?
 #TODO: should be cleaning up an option?
 rm ucdak8s.yaml
 rm my-ucdagentvalues.yaml

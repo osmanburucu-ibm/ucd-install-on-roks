@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 # UCD Version
+# version: "7.1.2.0"
 version: "7.1.1.2"
 
 image:
@@ -20,13 +21,16 @@ persistence:
   enabled: true
   useDynamicProvisioning: true
   fsGroup: "1001"
+#  fsGroup:
   
 confVolume:
   name: "conf"
   existingClaimName: ""
   storageClassName: "ibmc-block-gold"
+  # storageClassName: ""
   size: "20Gi"
   accessMode: "ReadWriteOnce"
+  # accessMode: "ReadWriteMany"
 
 # UCD Agent Relay URI 
 # random:(http://relay1:20080,http://relay2:20080)

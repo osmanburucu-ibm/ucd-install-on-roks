@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 # UCD Version
-version: "7.1.1.2"
+version: "7.1.2.0"
 
 image:
   pullPolicy: Always
