@@ -3,8 +3,8 @@
 # Declare variables to be passed into your templates.
 
 # UCD Version
-# version: "7.1.2.0"
-version: "7.1.1.2"
+version: "7.1.2.0"
+# version: "7.1.1.2"
 
 image:
   pullPolicy: Always
@@ -42,6 +42,7 @@ codestationUrl: ""
 
 # UCD Server URI
 # random:(wss://ucd1.example.com:7919,wss://ucd2.example.com:7919)
+# TODO: provide url/route which is accessible outside of node also!
 serverUri: "wss://UCD-RELEASENAME-ibm-ucd-prod:7919"
 
 # Secret holding keystore password
